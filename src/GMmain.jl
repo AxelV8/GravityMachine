@@ -377,6 +377,7 @@ function GM( fname::String,
     nbvar = size(A,2)
     nbobj = 2
 
+    @show A
     # structure pour les points qui apparaitront dans l'affichage graphique
     d = tListDisplay([],[], [],[], [],[], [],[], [],[], [],[], [],[])
 
@@ -597,6 +598,7 @@ function GM( fname::String,
         @printf("Quality measure: %5.2f %%\n", quality*100)
     end
 
+    @show A
 end
 
 # ==============================================================================
