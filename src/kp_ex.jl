@@ -1,101 +1,75 @@
-function k1p1(C::Vector{Int64}, Av::Vector{Vector{Int64}}, Ac::Vector{Vector{Int64}}, S::Vector{Int64}, z::Int64, u::Vector{Tuple{Float64, Int64}}, possible::Vector{Bool}, contrainteLibre::Vector{Int64}, listeInter::Vector{Set{Int64}}, inS::Vector{Bool})
-	newPossible=Vector{Bool}(undef, length(Av))
-	newz=0
-	compteur=0
-	stock=true
-	for i in S
-		newPossible=copy(possible)
-		for j in listeInter[i]
-			newPossible[j]=true
-			for k in listeInter[j]
-				if ((inS[k]==true)&&(k!=i))
-					newPossible[j]=false
-				end
-			end
+using JuMP, GLPK, PyPlot, Printf, Random
+include("GMprojection.jl")
+
+function kp_exchange(pb, n::Int64, k::Int64, 
+	A::Array{Int,2}, c1::Array{Int,1}, c2::Array{Int,1}, 
+	λ1::Vector{Float64}, λ2::Vector{Float64},
+	d::tListDisplay)
+
+
+	lA::tSolution{Int64} = []
+	nbIter::Int64 = rand(1:n)
+
+	l0::Vector{Int64} = findall(i : pb.sInt.x[i]== 0)
+	l1::Vector{Int64} = findall(i : pb.sInt.x[i]== 1)
+
+	for i in 1:nbIter
+		rnd = rand(1:3)
+		if rnd == 1
+			stock_l0 = rand(l0)
+			stock_l1 = rand(l1)
+
+			#=-------MAJ_LIST--------------------=#
+			l0 = delete!(l0, stock_l0)
+			l1 = push!(l1,stock_l0)
+
+			l1 = delete!(l1, stock_l1)
+			l0 = push!(l0, stock_l1)
+			#=-----------------------------------=#
+			pb = kp_1_1(pb, stock_l0,stock_l1)
+		elseif rnd == 2
+			#=-------MAJ_LIST--------------------=#
+			stock_l0 = rand(l0)
+			l0 = delete!(l0, stock_l0)
+			l1 = push!(l1,stock_l0)
+			#=------------------------------------=#
+			
+			pb = kp_0_1(pb, stock_l0)
+		else
+			#=-------MAJ_LIST--------------------=#
+			stock_l1 = rand(l1)
+			l1 = delete!(l1, stock_l1)
+			l0 = push!(l0, stock_l1)
+			#=------------------------------------=#
+
+			pb = kp_1_0(pb, stock_l1)
 		end
-		compteur+=1
-		for (_, e) in u
-			if(newPossible[e])
-				newz=z-C[i]+C[e]
-				if(newz>z)
-					inS[i]=false
-					inS[e]=true
-					for k in Av[i]
-						contrainteLibre[k]=true
-					end
-					possible[e]=false
-					for k in Av[e] #on parcourt les varibles qui apparaisent dans les contraintes 
-						contrainteLibre[k]=false
-						for p in Ac[k]
-							possible[p]=false;
-						end
-					end
-					for k in Av[i]
-						stock=true
-						for p in Ac[k]
-							for j in Av[p]
-								if contrainteLibre[j]==false
-									stock=false
-								end
-							end
-							if stock
-								possible[p]=true
-							end
-						end
-					end
-					S[compteur]=e
-					return(false, S, newz, possible, contrainteLibre, inS)
-				end
-			end
+
+		projectingSolution!(pb,  k, A, c1, c2, λ1, λ2,d)
+
+		#=
+		if(?????)
+			push!(lA,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
 		end
+		=#
 	end
-	return(true, S, z, possible, contrainteLibre, inS)
+
+	return lA
 end
-#kp exchange avec k=0 et p=1
-function k0p1(C::Vector{Int64}, Av::Vector{Vector{Int64}}, Ac::Vector{Vector{Int64}}, S::Vector{Int64}, z::Int64, u::Vector{Tuple{Float64, Int64}}, possible::Vector{Bool})
-	for (_, e) in u
-		if (possible[e])
-			possible[e]=false
-			for k in Av[e] #on parcourt les varibles qui apparaisent dans les contraintes 
-				for p in Ac[k]
-					possible[p]=false;
-				end
-			end
-			return (false, append!(S, e), (z+C[e]), possible)
-		end
-	end
-	(true, S, z, possible)
+
+function kp_1_1(pb,i,j)
+	pb.sInt.x[i] == 1
+	pb.sInt.x[j] == 0
+
+	return pb
 end
-#descente de notre algorithme utilisant les kp exchange
-function descente(C::Vector{Int64}, Av::Vector{Vector{Int64}}, Ac::Vector{Vector{Int64}}, S::Vector{Int64}, z::Int64, u::Vector{Tuple{Float64, Int64}}, possible::Vector{Bool}, contrainteLibre::Vector{Int64}, listeInter::Vector{Set{Int64}}, inS::Vector{Bool}, bavard::Bool)
-	if bavard
-		print("|")
-	end
-	fin=false
-	stock=false#si on a rien bougé alors k0p1 sert à rien
-	while !(fin)
-		(fin, S, z, possible, contrainteLibre, inS)=k2p1(C, Av, Ac, S, z, u, possible, contrainteLibre, listeInter, inS)
-		if !(fin)&&bavard
-			print("^")
-			stock=true
-		end
-	end
-	fin=false
-	while !(fin)
-		(fin, S, z, possible, contrainteLibre, inS)=k1p1(C, Av, Ac, S, z, u, possible, contrainteLibre, listeInter, inS)
-		if !(fin)&&bavard
-			print("^")
-			stock=true
-		end
-	end
-	if(stock)
-		fin=false
-		while !(fin)
-			(fin, S, z, possible)=k0p1(C, Av, Ac, S, z, u, possible)
-			if !(fin)&&bavard
-				print("^")
-			end
-		end
-	end
-	return (S, z)
+
+function kp_0_1(pb,i)
+	pb.sInt.x[i] == 1
+	return pb
+end
+
+function kp_1_0(pb,i)
+	pb.sInt.x[i] == 0
+	return pb
 end

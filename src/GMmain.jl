@@ -23,7 +23,7 @@ include("GMprojection.jl")     # JuMP models for computing the projection on the
 include("GMmopPrimitives.jl")  # usuals algorithms in multiobjective optimization
 include("GMperturbation.jl")   # routines dealing with the perturbation of a solution when a cycle is detected
 include("GMquality.jl")        # quality indicator of the bound set U generated
-
+include("kp_ex.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -475,6 +475,7 @@ function GM( fname::String,
         #roundingSolutionnew24!(vg,k,c1,c2,d) # deux cones
         roundingSolutionNew23!(vg,k,c1,c2,d) # un cone et LS sur generateur
 
+
         push!(H,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
         println("   t=",trial,"  |  Tps=", round(time()- temps, digits=4))
 
@@ -492,6 +493,16 @@ function GM( fname::String,
                 #roundingSolution!(vg,k,c1,c2,d)
                 #roundingSolutionnew24!(vg,k,c1,c2,d)
                 roundingSolutionNew23!(vg,k,c1,c2,d)
+                #=----------------------------------------------KP-EXCHANGEEEEEEEEEE---------------------------------------------------------------------------=#
+                println("Print de sInt:")
+                @show(vg[k].sInt.x)
+
+                #=----------------AMELIORATION---------------------------------=#
+                list_Admissible = kp_exchange(deepcopy(vg[k]),rand(1:10), k, A, c1, c2, λ1, λ2,d)
+                
+                push!(H,list_Admissible)
+
+                #=---------------------------------------------------------------------------------------------------------------------------------------------=#
                 println("   t=",trial,"  |  Tps=", round(time()- temps, digits=4))
 
                 # test detection cycle sur solutions entieres ------------------
@@ -603,9 +614,9 @@ end
 
 # ==============================================================================
 
-#@time GM("sppaa02.txt", 6, 20, 20)
+@time GM("sppaa02.txt", 6, 20, 20)
 #@time GM("sppnw03.txt", 6, 20, 20) #pb glpk
 #@time GM("sppnw10.txt", 6, 20, 20)
-@time GM("didactic5.txt", 5, 5, 10)
+#@time GM("didactic5.txt", 5, 5, 10)
 #@time GM("sppnw29.txt", 6, 30, 20)
 nothing
