@@ -377,7 +377,7 @@ function GM( fname::String,
     nbvar = size(A,2)
     nbobj = 2
 
-    @show A
+    
     # structure pour les points qui apparaitront dans l'affichage graphique
     d = tListDisplay([],[], [],[], [],[], [],[], [],[], [],[], [],[])
 
@@ -495,12 +495,20 @@ function GM( fname::String,
                 roundingSolutionNew23!(vg,k,c1,c2,d)
                 #=----------------------------------------------KP-EXCHANGEEEEEEEEEE---------------------------------------------------------------------------=#
                 println("Print de sInt:")
-                @show(vg[k].sInt.x)
+                
 
-                #=----------------AMELIORATION---------------------------------=#
+                #=------------------------------------------------AMELIORATION---------------------------------=#
+                println("Run les Kp:")
                 list_Admissible = kp_exchange(deepcopy(vg[k]),rand(1:10), k, A, c1, c2, λ1, λ2,d)
                 
-                push!(H,list_Admissible)
+                println("Taille liste:", length(list_Admissible))
+
+                for i in 1:length(list_Admissible)
+                    if list_Admissible[i].sFea
+                        println("La sol est admissible")
+                        push!(H,[list_Admissible[i].sInt.y[1],list_Admissible[i].sInt.y[2]])
+                    end
+                end
 
                 #=---------------------------------------------------------------------------------------------------------------------------------------------=#
                 println("   t=",trial,"  |  Tps=", round(time()- temps, digits=4))
