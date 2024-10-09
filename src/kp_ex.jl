@@ -47,11 +47,9 @@ function kp_exchange(pb, n::Int64, k::Int64,
 
 		projectingSolution!(pb,  k, A, c1, c2, λ1, λ2,d)
 
-		#=
-		if(?????)
+		if(pb[k].sFea)
 			push!(lA,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
 		end
-		=#
 	end
 
 	return lA
