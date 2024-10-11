@@ -463,6 +463,7 @@ function GM( fname::String,
 
     @printf("4) terraformation generateur par generateur \n\n")
 
+    list_Admissible = []
     for k in [i for i in 1:nbgen if !isFeasible(vg,i)]
         temps = time()
         trial = 0
@@ -499,15 +500,39 @@ function GM( fname::String,
 
                 #=------------------------------------------------AMELIORATION---------------------------------=#
                 println("Run les Kp:")
-                list_Admissible = kp_exchange(deepcopy(vg[k]),rand(1:10), k, A, c1, c2, λ1, λ2,d)
+                list = kp_exchange(deepcopy(vg[k]),rand(1:9), k, A, c1, c2, λ1, λ2,d)
                 
-                println("Taille liste:", length(list_Admissible))
 
-                for i in 1:length(list_Admissible)
-                    if list_Admissible[i].sFea
-                        println("La sol est admissible")
-                        push!(H,[list_Admissible[i].sInt.y[1],list_Admissible[i].sInt.y[2]])
+                println("Taille liste:", length(list))
+
+                #------------------------------------------------PROJECTION DE LA SOLUTION----------------------------------
+                for i in 1:length(list)
+                    projectingSolution!(list, i, A, c1, c2, λ1, λ2,d)
+                end
+
+
+                #=---------------------------------------------------------------------------------------------------------=#
+                stock_index = []
+                if length(list) != 0
+                    println("on entre dans la boucle")
+                    for i in 1:length(list)
+                        println("lala")
+                        if list[i].sFea
+                            println("lolo")
+                            println("La sol est admissible")
+                            push!(H,[list[i].sInt.y[1],list[i].sInt.y[2]])
+                        else
+                            push!(stock_index,i)
+
+                        end
                     end
+                        println("Taille de truc a sup ", length(stock_index) )
+                        println("Taille list de base ",length(list))
+                        deleteat!(list,stock_index)
+                        println("Taille list apres supp ",length(list))
+                    
+
+                    push!(list_Admissible,list)
                 end
 
                 #=---------------------------------------------------------------------------------------------------------------------------------------------=#
@@ -593,9 +618,7 @@ function GM( fname::String,
     X_EBP_frontiere, Y_EBP_frontiere, X_EBP, Y_EBP = ExtractEBP(d.XFeas, d.YFeas)
     plot(X_EBP_frontiere, Y_EBP_frontiere, color="green", markersize=3.0, marker="x")
     scatter(X_EBP, Y_EBP, color="green", s = 150, alpha = 0.3, label = L"y \in U")
-    @show X_EBP
-    @show Y_EBP
-
+   
     # Donne les points qui ont fait l'objet d'une perturbation -----------------
      scatter(d.XPert,d.YPert, color="magenta", marker="s", label ="pertub")
 
@@ -603,8 +626,7 @@ function GM( fname::String,
      XN,YN = loadNDPoints2SPA(fname)
      plot(XN, YN, color="black", linewidth=0.75, marker="+", markersize=1.0, linestyle=":", label = L"y \in Y_N")
      scatter(XN, YN, color="black", marker="+")
-    @show XN
-    @show YN
+   
 
     # Affiche le cadre avec les legendes des differents traces -----------------
     legend(bbox_to_anchor=[1,1], loc=0, borderaxespad=0, fontsize = "x-small")
@@ -618,7 +640,6 @@ function GM( fname::String,
     end
 
     #@show A
-    print(list_Admissible)
     savefig("test")
 end
 
