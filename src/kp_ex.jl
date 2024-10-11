@@ -40,40 +40,40 @@ function kp_exchange(pb, n::Int64, k::Int64,
 		if rnd == 1
 			#=-------MAJ_LIST--------------------=#
 			println("Je supprime dans l0")
-			l0 = deleteat!(l0, stock_l0)
+			deleteat!(l0, findall(x->x==stock_l0, l0))
 
 			println("Je supprime dans l1")
-			l1 = deleteat!(l1, stock_l1)
+			deleteat!(l1, findall(x->x==stock_l1, l1))
 
 			println("J'ajoute dans l1")
-			l1 = push!(l1,stock_l0)
+			push!(l1,stock_l0)
 
 			println("J'ajoute dans l0")
-			l0 = push!(l0, stock_l1)
+			push!(l0, stock_l1)
 			#=-----------------------------------=#
 			pb = kp_1_1(pb, stock_l0,stock_l1)
 		elseif rnd == 2
 			#=-------MAJ_LIST--------------------=#
 			println("Je supprime dans l0")
-			l0 = deleteat!(l0, stock_l0)
+			deleteat!(l0, findall(x->x==stock_l0, l0))
 			println("J'ajoute dans l1")
-			l1 = push!(l1,stock_l0)
+			push!(l1,stock_l0)
 			#=------------------------------------=#
 			
 			pb = kp_0_1(pb, stock_l0)
 		else
 			#=-------MAJ_LIST--------------------=#
 			println("Je supprime dans l1")
-			l1 = deleteat!(l1, stock_l1)
+			deleteat!(l1, findall(x->x==stock_l1, l1))
 			println("J'ajoute dans l0")
-			l0 = push!(l0, stock_l1)
+			push!(l0, stock_l1)
 			#=------------------------------------=#
 
 			pb = kp_1_0(pb, stock_l1)
 		end
 		push!(lA, pb)
 		println("On projette la solution")
-		projectingSolution!(lA, i, A, c1, c2, λ1, λ2,d)
+		#projectingSolution!(lA, i, A, c1, c2, λ1, λ2,d)
 		#TRES TRES CHIANT: JETTE UN COUP D'OEIL A LA FONCTION PROJECTING SOLUTION
 		#SOLUTION: PUSH TOUTE LES SOLUTIONS DU KP DANS LA ET FAIRE UN BOUCLE DANS LE MAIN QUI TRIE LES SOLUTIONS ADMISSIBLE
 		#=if (!lA[i].sFea)

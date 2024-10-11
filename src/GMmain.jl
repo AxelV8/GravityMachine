@@ -617,7 +617,9 @@ function GM( fname::String,
         @printf("Quality measure: %5.2f %%\n", quality*100)
     end
 
-    @show A
+    #@show A
+    print(list_Admissible)
+    savefig("test")
 end
 
 # ==============================================================================
