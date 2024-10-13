@@ -7,7 +7,9 @@ const verbose = true
 const graphic = true
 
 println("-) Active les packages requis\n")
-using JuMP, GLPK, PyPlot, Printf, Random
+using JuMP, GLPK, Printf, Random
+PlotsOuPyPlot = true
+PlotsOuPyPlot ? using Plots : using PyPlot
 verbose ? println("  Fait \n") : nothing
 
 generateurVisualise = -1
@@ -24,6 +26,7 @@ include("GMmopPrimitives.jl")  # usuals algorithms in multiobjective optimizatio
 include("GMperturbation.jl")   # routines dealing with the perturbation of a solution when a cycle is detected
 include("GMquality.jl")        # quality indicator of the bound set U generated
 include("kp_ex.jl")
+include("admissible.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -336,21 +339,26 @@ function calculerDirections2(L::Vector{tSolution{Float64}}, vg::Vector{tGenerate
         @printf("  xm= %7.2f   ym= %7.2f ",xm,ym)
         @printf("  Δx= %8.2f    Δy= %8.2f ",Δx,Δy)
         @printf("  λ1= %6.5f    λ2= %6.5f \n",λ1[k],λ2[k])
-        if generateurVisualise == -1 
-            # affichage pour tous les generateurs
-            plot(n1, n2, xm, ym, linestyle="-", color="blue", marker="+")
-            annotate("",
-                     xy=[xm;ym],# Arrow tip
-                     xytext=[n1;n2], # Text offset from tip
-                     arrowprops=Dict("arrowstyle"=>"->"))        
-        elseif generateurVisualise == k
-            # affichage seulement pour le generateur k
-            plot(n1, n2, xm, ym, linestyle="-", color="blue", marker="+")
-            annotate("",
-                     xy=[xm;ym],# Arrow tip
-                     xytext=[n1;n2], # Text offset from tip
-                     arrowprops=Dict("arrowstyle"=>"->"))        
-        end 
+        if !PlotsOuPyPlot
+            if generateurVisualise == -1 
+                # affichage pour tous les generateurs
+                
+                plot(n1, n2, xm, ym, linestyle="-", color="blue", marker="+")
+                plot 
+                annotate("",
+                        xy=[xm;ym],# Arrow tip
+                        xytext=[n1;n2], # Text offset from tip
+                        arrowprops=Dict("arrowstyle"=>"->")) 
+            elseif generateurVisualise == k
+                # affichage seulement pour le generateur k
+                plot(n1, n2, xm, ym, linestyle="-", color="blue", marker="+")
+                plot 
+                annotate("",
+                        xy=[xm;ym],# Arrow tip
+                        xytext=[n1;n2], # Text offset from tip
+                        arrowprops=Dict("arrowstyle"=>"->"))
+            end 
+        end
         #println("")
     end
     return λ1, λ2
@@ -447,12 +455,20 @@ function GM( fname::String,
     # --------------------------------------------------------------------------
     # Sortie graphique
 
-    figure("Gravity Machine",figsize=(6.5,5))
-    #xlim(25000,45000)
-    #ylim(20000,40000)
-    xlabel(L"z^1(x)")
-    ylabel(L"z^2(x)")
-    PyPlot.title("Cone | 1 rounding | 2-$fname")
+    if PlotsOuPyPlot
+        plot(figsize=(6.5,5))
+        title!("Gravity Machine",)
+        xlabel!("z1(x)")
+        ylabel!("z2(x)")
+    else
+        figure("Gravity Machine",figsize=(6.5,5))
+        xlim(25000,45000)
+        ylim(20000,40000)
+        xlabel("z1(x)")
+        ylabel("z2(x)")
+        PyPlot.title("Cone | 1 rounding | 2-$fname")
+    end
+    
 
     # --------------------------------------------------------------------------
     # --------------------------------------------------------------------------
@@ -462,6 +478,28 @@ function GM( fname::String,
     # ==========================================================================
 
     @printf("4) terraformation generateur par generateur \n\n")
+
+    Lz1=[]
+    Lz2=[]
+    compteurAdmissibleViaKP=0
+    totalKPEffectuer=0
+
+    # ==========================================================================
+    # ==========================================================================Calcule d'un nadir "dystopique"
+    maxZ1=0
+    maxZ2=0
+    for point in vg
+        if point.sRel.y[1]>maxZ1
+            maxZ1=point.sRel.y[1]
+        end
+        if point.sRel.y[2]>maxZ2
+            maxZ2=point.sRel.y[2]
+        end
+    end
+    maxC1=maximum(c1)
+    maxC2=maximum(c2)
+    dystoZ1=maxZ1+2*maxC1
+    dystoZ2=maxZ2+2*maxC2
 
     list_Admissible = []
     for k in [i for i in 1:nbgen if !isFeasible(vg,i)]
@@ -500,15 +538,18 @@ function GM( fname::String,
 
                 #=------------------------------------------------AMELIORATION---------------------------------=#
                 println("Run les Kp:")
-                list = kp_exchange(deepcopy(vg[k]),rand(1:9), k, A, c1, c2, λ1, λ2,d)
-                
+                randomNumber=rand(500:1000)
+                totalKPEffectuer+=randomNumber
+                list, listz1, listz2 = kp_exchange(deepcopy(vg[k]), randomNumber, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2)
+                append!(Lz1, listz1)
+                append!(Lz2, listz2)
 
                 println("Taille liste:", length(list))
 
                 #------------------------------------------------PROJECTION DE LA SOLUTION----------------------------------
-                for i in 1:length(list)
+                #=for i in 1:length(list)
                     projectingSolution!(list, i, A, c1, c2, λ1, λ2,d)
-                end
+                end=#
 
 
                 #=---------------------------------------------------------------------------------------------------------=#
@@ -517,9 +558,10 @@ function GM( fname::String,
                     println("on entre dans la boucle")
                     for i in 1:length(list)
                         println("lala")
-                        if list[i].sFea
+                        if admissibleBourin(list[i].sInt.x ,A)#list[i].sFea
                             println("lolo")
                             println("La sol est admissible")
+                            compteurAdmissibleViaKP+=1
                             push!(H,[list[i].sInt.y[1],list[i].sInt.y[2]])
                         else
                             push!(stock_index,i)
@@ -596,40 +638,72 @@ function GM( fname::String,
     # Donne les points relaches initiaux ---------------------------------------
 #    scatter(d.xLf1,d.yLf1,color="blue", marker="x")
 #    scatter(d.xLf2,d.yLf2,color="red", marker="+")
-    graphic ? scatter(d.xL,d.yL,color="blue", marker="x", label = L"y \in L") : nothing
-
+    if PlotsOuPyPlot
+        graphic ? scatter!(d.xL,d.yL, mc=:blue, markershape=:xcross , label="y in L") : nothing
+    else
+        graphic ? scatter(d.xL,d.yL,color="blue", marker="x", label = "y in L") : nothing
+    end
     # Donne les points entiers -------------------------------------------------
-    graphic ? scatter(d.XInt,d.YInt,color="orange", marker="s", label = L"y"*" rounded") : nothing
+    if PlotsOuPyPlot
+        graphic ? scatter!(d.XInt,d.YInt, mc=:orange, markershape=:rect , label="y rounded") : nothing
+    else
+        graphic ? scatter(d.XInt,d.YInt,color="orange", marker="s", label = "y rounded") : nothing
+    end
 #    @show d.XInt
 #    @show d.YInt
 
     # Donne les points apres projection Δ(x,x̃) ---------------------------------
-    graphic ? scatter(d.XProj,d.YProj, color="red", marker="x", label = L"y"*" projected") : nothing
+    if PlotsOuPyPlot
+        graphic ? scatter!(d.XProj,d.YProj, mc=:red, markershape=:xcross , label="y projected") : nothing
+    else
+        graphic ? scatter(d.XProj,d.YProj, color="red", marker="x", label = "y projected") : nothing
+    end
 #    @show d.XProj
 #    @show d.YProj
 
     # Donne les points admissibles ---------------------------------------------
-    graphic ? scatter(d.XFeas,d.YFeas, color="green", marker="o", label = L"y \in F") : nothing
+    if PlotsOuPyPlot
+        graphic ? scatter!(d.XFeas,d.YFeas, mc=:green, markershape=:circle , label="y in F") : nothing
+    else
+        graphic ? scatter(d.XFeas,d.YFeas, color="green", marker="o", label = "y in F") : nothing
+    end
 #    @show d.XFeas
 #    @show d.YFeas
 
     # Donne l'ensemble bornant primal obtenu + la frontiere correspondante -----
     #--> TODO : stocker l'EBP dans U proprement
     X_EBP_frontiere, Y_EBP_frontiere, X_EBP, Y_EBP = ExtractEBP(d.XFeas, d.YFeas)
-    plot(X_EBP_frontiere, Y_EBP_frontiere, color="green", markersize=3.0, marker="x")
-    scatter(X_EBP, Y_EBP, color="green", s = 150, alpha = 0.3, label = L"y \in U")
+    if PlotsOuPyPlot
+        plot!(X_EBP_frontiere, Y_EBP_frontiere, lc=:green, ms=3.0, markershape=:cross)
+        scatter!(X_EBP,Y_EBP, mc=:green, markershape=:circle , label="y in U")
+    else
+        plot(X_EBP_frontiere, Y_EBP_frontiere, color="green", markersize=3.0, marker="x")
+        scatter(X_EBP, Y_EBP, color="green", s = 150, alpha = 0.3, label = "y in U")
+    end
    
     # Donne les points qui ont fait l'objet d'une perturbation -----------------
-     scatter(d.XPert,d.YPert, color="magenta", marker="s", label ="pertub")
+    if PlotsOuPyPlot
+        scatter!(d.XPert,d.YPert, mc=:magenta, markershape=:rect , label="pertub")
+    else
+        scatter(d.XPert,d.YPert, color="magenta", marker="s", label ="pertub")
+    end
 
     # Donne les points non-domines exacts de cette instance --------------------
      XN,YN = loadNDPoints2SPA(fname)
-     plot(XN, YN, color="black", linewidth=0.75, marker="+", markersize=1.0, linestyle=":", label = L"y \in Y_N")
-     scatter(XN, YN, color="black", marker="+")
-   
+     if PlotsOuPyPlot
+        plot!(XN, YN, lc=:black, lw=0.75, markershape=:cross, ms=1.0, ls=:dot, label="y in YN")
+        scatter!(XN,YN, mc=:black, markershape=:cross)
+     else
+        plot(XN, YN, color="black", linewidth=0.75, marker="+", markersize=1.0, linestyle=":", label = "y in YN")
+        scater(XN, YN, color="black", marker="+")
+     end
 
     # Affiche le cadre avec les legendes des differents traces -----------------
-    legend(bbox_to_anchor=[1,1], loc=0, borderaxespad=0, fontsize = "x-small")
+    if PlotsOuPyPlot
+        plot!(legend=:outerright)
+    else
+        legend(bbox_to_anchor=[1,1], loc=0, borderaxespad=0, fontsize = "x-small")
+    end
     #PyPlot.title("Cone | 1 rounding | 2-$fname")
 
     # Compute the quality indicator of the bound set U generated ---------------
@@ -640,7 +714,10 @@ function GM( fname::String,
     end
 
     #@show A
+    scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
     savefig("test")
+    println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
+    println("total KP Effectuer : ", totalKPEffectuer)
 end
 
 # ==============================================================================
