@@ -61,9 +61,13 @@ function kp_exchange(pb, n::Int64, k::Int64,
 			println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 			#=-----------------------------------=#
+<<<<<<< Updated upstream
 			pb = kp_1_1(pb, stock_l0,stock_l1)
 			z1=z1+c1[stock_l0]-c1[stock_l1]
 			z2=z2+c2[stock_l0]-c2[stock_l1]
+=======
+			pb, y= kp_1_1(pb, stock_l0,stock_l1)
+>>>>>>> Stashed changes
 		elseif rnd == 2
 			#=-------MAJ_LIST--------------------=#
 			println("Je supprime dans l0")
@@ -72,9 +76,13 @@ function kp_exchange(pb, n::Int64, k::Int64,
 			push!(l1,stock_l0)
 			#=------------------------------------=#
 			
+<<<<<<< Updated upstream
 			pb = kp_0_1(pb, stock_l0)
 			z1=z1+c1[stock_l0]
 			z2=z2+c2[stock_l0]
+=======
+			pb, y= kp_0_1(pb, stock_l0)
+>>>>>>> Stashed changes
 		else
 			#=-------MAJ_LIST--------------------=#
 			println("Je supprime dans l1")
@@ -83,6 +91,7 @@ function kp_exchange(pb, n::Int64, k::Int64,
 			push!(l0, stock_l1)
 			#=------------------------------------=#
 
+<<<<<<< Updated upstream
 			pb = kp_1_0(pb, stock_l1)
 			z1=z1-c1[stock_l1]
 			z2=z2-c2[stock_l1]
@@ -102,6 +111,9 @@ function kp_exchange(pb, n::Int64, k::Int64,
 			pb = kp_1_0(pb, stock_l1)
 			z1=z1-c1[stock_l1]
 			z2=z2-c2[stock_l1]
+=======
+			pb, y = kp_1_0(pb, stock_l1)
+>>>>>>> Stashed changes
 		end
 		push!(lA, pb)
 		push!(z1list, z1)
