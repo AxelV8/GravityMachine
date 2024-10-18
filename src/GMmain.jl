@@ -8,8 +8,9 @@ const graphic = true
 
 println("-) Active les packages requis\n")
 using JuMP, GLPK, Printf, Random
-PlotsOuPyPlot = true
-PlotsOuPyPlot ? using Plots : using PyPlot
+#PlotsOuPyPlot = true
+#PlotsOuPyPlot ? using Plots : using PyPlot
+using Plots
 verbose ? println("  Fait \n") : nothing
 
 generateurVisualise = -1
