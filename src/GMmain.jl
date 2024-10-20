@@ -8,9 +8,8 @@ const graphic = true
 
 println("-) Active les packages requis\n")
 using JuMP, GLPK, Printf, Random
-#PlotsOuPyPlot = true
-#PlotsOuPyPlot ? using Plots : using PyPlot
-using Plots
+PlotsOuPyPlot = true
+PlotsOuPyPlot ? using Plots : using PyPlot
 verbose ? println("  Fait \n") : nothing
 
 generateurVisualise = -1
@@ -28,6 +27,7 @@ include("GMperturbation.jl")   # routines dealing with the perturbation of a sol
 include("GMquality.jl")        # quality indicator of the bound set U generated
 include("kp_ex.jl")
 include("admissible.jl")
+include("testNSGAII.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -458,7 +458,7 @@ function GM( fname::String,
 
     if PlotsOuPyPlot
         plot(figsize=(6.5,5))
-        title!("Gravity Machine",)
+        title!("Gravity Machine")
         xlabel!("z1(x)")
         ylabel!("z2(x)")
     else
@@ -501,6 +501,9 @@ function GM( fname::String,
     maxC2=maximum(c2)
     dystoZ1=maxZ1+2*maxC1
     dystoZ2=maxZ2+2*maxC2
+
+    listNSGAZ1=[]
+    listNSGAZ2=[]
 
     list_Admissible = []
     for k in [i for i in 1:nbgen if !isFeasible(vg,i)]
@@ -591,9 +594,13 @@ function GM( fname::String,
                 push!(H,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
 
             end
+            (nsgaY1, nsgaY2) = NSGAII_GM(c1, c2, A, vg[k].sInt)
+            push!(listNSGAZ1, nsgaY1)
+            push!(listNSGAZ2, nsgaY2)
         end
         if t1
             println("   feasible \n")
+
         elseif t2
             println("   maxTrial \n")
         elseif t3
@@ -716,6 +723,7 @@ function GM( fname::String,
 
     #@show A
     scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
+    scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
     savefig("test")
     println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
     println("total KP Effectuer : ", totalKPEffectuer)
