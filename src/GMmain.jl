@@ -8,8 +8,17 @@ const graphic = true
 
 println("-) Active les packages requis\n")
 using JuMP, GLPK, Printf, Random
+
+NSGATrue= false
+borneTrue= true
 PlotsOuPyPlot = true
-PlotsOuPyPlot ? using Plots : using PyPlot
+chooseKP = false
+
+if PlotsOuPyPlot
+    using Plots
+else
+    using PyPlot
+end
 verbose ? println("  Fait \n") : nothing
 
 generateurVisualise = -1
@@ -27,7 +36,8 @@ include("GMperturbation.jl")   # routines dealing with the perturbation of a sol
 include("GMquality.jl")        # quality indicator of the bound set U generated
 include("kp_ex.jl")
 include("admissible.jl")
-include("testNSGAII.jl")
+
+#include("testNSGAII.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -463,8 +473,8 @@ function GM( fname::String,
         ylabel!("z2(x)")
     else
         figure("Gravity Machine",figsize=(6.5,5))
-        xlim(25000,45000)
-        ylim(20000,40000)
+        #xlim(25000,45000)
+        #ylim(20000,40000)
         xlabel("z1(x)")
         ylabel("z2(x)")
         PyPlot.title("Cone | 1 rounding | 2-$fname")
@@ -497,10 +507,10 @@ function GM( fname::String,
             maxZ2=point.sRel.y[2]
         end
     end
-    maxC1=maximum(c1)
-    maxC2=maximum(c2)
-    dystoZ1=maxZ1+2*maxC1
-    dystoZ2=maxZ2+2*maxC2
+    #maxC1=maximum(c1)
+    #maxC2=maximum(c2)
+    dystoZ1=maxZ1+1
+    dystoZ2=maxZ2+1
 
     listNSGAZ1=[]
     listNSGAZ2=[]
@@ -544,7 +554,7 @@ function GM( fname::String,
                 println("Run les Kp:")
                 randomNumber=rand(500:1000)
                 totalKPEffectuer+=randomNumber
-                list, listz1, listz2 = kp_exchange(deepcopy(vg[k]), randomNumber, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2)
+                list, listz1, listz2 = choose_KP(deepcopy(vg[k]), randomNumber, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2, borneTrue, chooseKP)
                 append!(Lz1, listz1)
                 append!(Lz2, listz2)
 
@@ -594,9 +604,11 @@ function GM( fname::String,
                 push!(H,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
 
             end
-            (nsgaY1, nsgaY2) = NSGAII_GM(c1, c2, A, vg[k].sInt)
-            push!(listNSGAZ1, nsgaY1)
-            push!(listNSGAZ2, nsgaY2)
+            if NSGATrue
+                (nsgaY1, nsgaY2) = NSGAII_GM(c1, c2, A, vg[k].sInt)
+                push!(listNSGAZ1, nsgaY1)
+                push!(listNSGAZ2, nsgaY2)
+            end
         end
         if t1
             println("   feasible \n")
@@ -703,7 +715,7 @@ function GM( fname::String,
         scatter!(XN,YN, mc=:black, markershape=:cross)
      else
         plot(XN, YN, color="black", linewidth=0.75, marker="+", markersize=1.0, linestyle=":", label = "y in YN")
-        scater(XN, YN, color="black", marker="+")
+        scatter(XN, YN, color="black", marker="+")
      end
 
     # Affiche le cadre avec les legendes des differents traces -----------------
@@ -722,8 +734,13 @@ function GM( fname::String,
     end
 
     #@show A
-    scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
-    scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
+    if PlotsOuPyPlot
+        scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
+        scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
+     else
+        scatter(Lz1, Lz2, color="pink", marker="x")
+        scatter(listNSGAZ1, listNSGAZ1, color="black", marker="x")
+     end
     savefig("test")
     println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
     println("total KP Effectuer : ", totalKPEffectuer)
@@ -731,9 +748,10 @@ end
 
 # ==============================================================================
 
-@time GM("sppaa02.txt", 6, 20, 20)
+#@time GM("sppaa02.txt", 6, 20, 20)
+#@time GM("sppnw04.txt", 6, 20, 20)
 #@time GM("sppnw03.txt", 6, 20, 20) #pb glpk
-#@time GM("sppnw10.txt", 6, 20, 20)
+@time GM("sppnw20.txt", 6, 20, 20)
 #@time GM("didactic5.txt", 5, 5, 10)
 #@time GM("sppnw29.txt", 6, 30, 20)
 nothing
