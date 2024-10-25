@@ -12,6 +12,3 @@ function admissibleBourin(X, A)
     end
     return true
 end
-
-
-

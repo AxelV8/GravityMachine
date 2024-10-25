@@ -37,7 +37,7 @@ include("GMquality.jl")        # quality indicator of the bound set U generated
 include("kp_ex.jl")
 include("admissible.jl")
 
-#include("testNSGAII.jl")
+include("testNSGAII.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -515,6 +515,8 @@ function GM( fname::String,
     listNSGAZ1=[]
     listNSGAZ2=[]
 
+    solutionX=[]
+
     list_Admissible = []
     for k in [i for i in 1:nbgen if !isFeasible(vg,i)]
         temps = time()
@@ -568,12 +570,10 @@ function GM( fname::String,
 
                 #=---------------------------------------------------------------------------------------------------------=#
                 stock_index = []
-                if length(list) != 0
+                #=if length(list) != 0 # A DECOMENTER TODO FIXME 
                     println("on entre dans la boucle")
                     for i in 1:length(list)
-                        println("lala")
                         if admissibleBourin(list[i].sInt.x ,A)#list[i].sFea
-                            println("lolo")
                             println("La sol est admissible")
                             compteurAdmissibleViaKP+=1
                             push!(H,[list[i].sInt.y[1],list[i].sInt.y[2]])
@@ -589,7 +589,7 @@ function GM( fname::String,
                     
 
                     push!(list_Admissible,list)
-                end
+                end=#
 
                 #=---------------------------------------------------------------------------------------------------------------------------------------------=#
                 println("   t=",trial,"  |  Tps=", round(time()- temps, digits=4))
@@ -602,17 +602,16 @@ function GM( fname::String,
                     perturbSolution30!(vg,k,c1,c2,d)
                 end
                 push!(H,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
-
             end
             if NSGATrue
                 (nsgaY1, nsgaY2) = NSGAII_GM(c1, c2, A, vg[k].sInt)
-                push!(listNSGAZ1, nsgaY1)
-                push!(listNSGAZ2, nsgaY2)
+                append!(listNSGAZ1, nsgaY1)
+                append!(listNSGAZ2, nsgaY2)
             end
         end
         if t1
             println("   feasible \n")
-
+            push!(solutionX, vg[k].sInt.x)
         elseif t2
             println("   maxTrial \n")
         elseif t3
@@ -737,21 +736,30 @@ function GM( fname::String,
     if PlotsOuPyPlot
         scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
         scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
-     else
+    else
         scatter(Lz1, Lz2, color="pink", marker="x")
         scatter(listNSGAZ1, listNSGAZ1, color="black", marker="x")
-     end
+    end
+
+
+    println(solutionX[1])
+    res1, res2=NSGAII_GM_SolAdmissible(c1, c2, A, solutionX)
+    scatter!(res1,res2, mc=:black, markershape=:xcross)
+
     savefig("test")
     println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
     println("total KP Effectuer : ", totalKPEffectuer)
+
 end
 
 # ==============================================================================
 
-#@time GM("sppaa02.txt", 6, 20, 20)
+@time GM("sppaa02.txt", 6, 20, 20)
+#@time GM("sppnw20.txt", 6, 20, 20)
+
+
 #@time GM("sppnw04.txt", 6, 20, 20)
 #@time GM("sppnw03.txt", 6, 20, 20) #pb glpk
-@time GM("sppnw20.txt", 6, 20, 20)
 #@time GM("didactic5.txt", 5, 5, 10)
 #@time GM("sppnw29.txt", 6, 30, 20)
 nothing
