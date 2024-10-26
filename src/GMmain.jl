@@ -9,10 +9,10 @@ const graphic = true
 println("-) Active les packages requis\n")
 using JuMP, GLPK, Printf, Random
 
-NSGATrue= false
-borneTrue= true
 PlotsOuPyPlot = true
-chooseKP = false
+borneTrue= true
+KP_11_01_10_OU_22_21_11 = false
+NSGATrue= true
 
 if PlotsOuPyPlot
     using Plots
@@ -37,7 +37,7 @@ include("GMquality.jl")        # quality indicator of the bound set U generated
 include("kp_ex.jl")
 include("admissible.jl")
 
-include("testNSGAII.jl")
+include("NSGAII.jl")
 
 # ==============================================================================
 # Ajout d'une solution relachee initiale a un generateur
@@ -507,13 +507,11 @@ function GM( fname::String,
             maxZ2=point.sRel.y[2]
         end
     end
-    #maxC1=maximum(c1)
-    #maxC2=maximum(c2)
-    dystoZ1=maxZ1+1
-    dystoZ2=maxZ2+1
+    nadirGenerateurZ1=maxZ1+1
+    nadirGenerateurZ2=maxZ2+1
 
-    listNSGAZ1=[]
-    listNSGAZ2=[]
+    #listNSGAZ1=[]
+    #listNSGAZ2=[]
 
     solutionX=[]
 
@@ -556,7 +554,7 @@ function GM( fname::String,
                 println("Run les Kp:")
                 randomNumber=rand(500:1000)
                 totalKPEffectuer+=randomNumber
-                list, listz1, listz2 = choose_KP(deepcopy(vg[k]), randomNumber, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2, borneTrue, chooseKP)
+                list, listz1, listz2 = choose_KP(deepcopy(vg[k]), randomNumber, k, A, c1, c2, λ1, λ2,d, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, KP_11_01_10_OU_22_21_11)
                 append!(Lz1, listz1)
                 append!(Lz2, listz2)
 
@@ -570,7 +568,7 @@ function GM( fname::String,
 
                 #=---------------------------------------------------------------------------------------------------------=#
                 stock_index = []
-                #=if length(list) != 0 # A DECOMENTER TODO FIXME 
+                if length(list) != 0 
                     println("on entre dans la boucle")
                     for i in 1:length(list)
                         if admissibleBourin(list[i].sInt.x ,A)#list[i].sFea
@@ -589,7 +587,7 @@ function GM( fname::String,
                     
 
                     push!(list_Admissible,list)
-                end=#
+                end
 
                 #=---------------------------------------------------------------------------------------------------------------------------------------------=#
                 println("   t=",trial,"  |  Tps=", round(time()- temps, digits=4))
@@ -603,11 +601,11 @@ function GM( fname::String,
                 end
                 push!(H,[vg[k].sInt.y[1],vg[k].sInt.y[2]])
             end
-            if NSGATrue
+            #=if NSGATrue
                 (nsgaY1, nsgaY2) = NSGAII_GM(c1, c2, A, vg[k].sInt)
                 append!(listNSGAZ1, nsgaY1)
                 append!(listNSGAZ2, nsgaY2)
-            end
+            end=#
         end
         if t1
             println("   feasible \n")
@@ -657,6 +655,17 @@ function GM( fname::String,
     # Donne les points relaches initiaux ---------------------------------------
 #    scatter(d.xLf1,d.yLf1,color="blue", marker="x")
 #    scatter(d.xLf2,d.yLf2,color="red", marker="+")
+    
+    #Montre les résultats du Kp
+    if PlotsOuPyPlot
+        scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
+        #scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
+    else
+        scatter(Lz1, Lz2, color="pink", marker="x")
+        #scatter(listNSGAZ1, listNSGAZ1, color="black", marker="x")
+    end
+
+
     if PlotsOuPyPlot
         graphic ? scatter!(d.xL,d.yL, mc=:blue, markershape=:xcross , label="y in L") : nothing
     else
@@ -693,7 +702,7 @@ function GM( fname::String,
     #--> TODO : stocker l'EBP dans U proprement
     X_EBP_frontiere, Y_EBP_frontiere, X_EBP, Y_EBP = ExtractEBP(d.XFeas, d.YFeas)
     if PlotsOuPyPlot
-        plot!(X_EBP_frontiere, Y_EBP_frontiere, lc=:green, ms=3.0, markershape=:cross)
+        plot!(X_EBP_frontiere, Y_EBP_frontiere, lc=:green, ms=3.0, markershape=:cross, label="borne sup")
         scatter!(X_EBP,Y_EBP, mc=:green, markershape=:circle , label="y in U")
     else
         plot(X_EBP_frontiere, Y_EBP_frontiere, color="green", markersize=3.0, marker="x")
@@ -732,19 +741,17 @@ function GM( fname::String,
         @printf("Quality measure: %5.2f %%\n", quality*100)
     end
 
-    #@show A
-    if PlotsOuPyPlot
-        scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
-        scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
-    else
-        scatter(Lz1, Lz2, color="pink", marker="x")
-        scatter(listNSGAZ1, listNSGAZ1, color="black", marker="x")
+    
+
+    #Fait et plot les résultats de NSGA II 
+    if NSGATrue
+        res1, res2=NSGAII_GM(c1, c2, A, solutionX)
+        if PlotsOuPyPlot
+            scatter!(res1,res2, mc=:brown, markershape=:octagon)
+        else
+            scatter(res1, res2, color="brown", marker="O")
+        end
     end
-
-
-    println(solutionX[1])
-    res1, res2=NSGAII_GM_SolAdmissible(c1, c2, A, solutionX)
-    scatter!(res1,res2, mc=:black, markershape=:xcross)
 
     savefig("test")
     println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
@@ -754,8 +761,8 @@ end
 
 # ==============================================================================
 
-@time GM("sppaa02.txt", 6, 20, 20)
-#@time GM("sppnw20.txt", 6, 20, 20)
+#@time GM("sppaa02.txt", 6, 20, 20)
+@time GM("sppnw20.txt", 6, 20, 20)
 
 
 #@time GM("sppnw04.txt", 6, 20, 20)

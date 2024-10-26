@@ -9,7 +9,7 @@ include("GMprojection.jl")
 function choose_KP(pb, n::Int64, k::Int64, 
 	A::Array{Int,2}, c1::Array{Int,1}, c2::Array{Int,1}, 
 	λ1::Vector{Float64}, λ2::Vector{Float64},
-	d::tListDisplay, dystoZ1, dystoZ2, borneTrue, chooseKP::Bool)
+	d::tListDisplay, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, chooseKP::Bool)
 
 
 	#=---------------------------INITIALISATION------------------------------------=#
@@ -39,20 +39,20 @@ function choose_KP(pb, n::Int64, k::Int64,
 
 	end
 
-	println("Taille lo:", length(l0))
-	println("Taille l1:", length(l1))
+	#println("Taille lo:", length(l0))
+	#println("Taille l1:", length(l1))
 	#=------------------------------------------------------------------------=#
 	
 
 	if chooseKP
 		println("On choisit le kp 1-1")
-		return kp_exchangev1(pb, n, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
+		return kp_exchangev1(pb, n, k, A, c1, c2, λ1, λ2,d, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
 	else
 		println("On choisit le kp 2-2")
-		return kp_exchangev2(pb, n, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
+		return kp_exchangev2(pb, n, k, A, c1, c2, λ1, λ2,d, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
 		if length(l0) == 1 || length(l1) == 1
 			println("Liste taille 1, on force le lancement de kp 1-1")
-			return kp_exchangev1(pb, n, k, A, c1, c2, λ1, λ2,d, dystoZ1, dystoZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
+			return kp_exchangev1(pb, n, k, A, c1, c2, λ1, λ2,d, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
 		end
 
 	end
@@ -64,9 +64,9 @@ end
 function kp_exchangev2(pb, n::Int64, k::Int64, 
 	A::Array{Int,2}, c1::Array{Int,1}, c2::Array{Int,1}, 
 	λ1::Vector{Float64}, λ2::Vector{Float64},
-	d::tListDisplay, dystoZ1, dystoZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
+	d::tListDisplay, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue, lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
 
-	println("On entre dans la fonction kp")
+	#println("On entre dans la fonction kp")
 
 	#=lA::Vector{tGenerateur} = [] 
 	nbIter::Int64 = rand(1:n)
@@ -132,16 +132,16 @@ function kp_exchangev2(pb, n::Int64, k::Int64,
 		if rnd == 1
 			#---------KP_1_1-----------------------
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0, l0))
 
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1, l1))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0)
 
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 			#=-----------------------------------=#
 			pb = kp_1_1(pb, stock_l0,stock_l1)
@@ -150,28 +150,28 @@ function kp_exchangev2(pb, n::Int64, k::Int64,
 		elseif rnd == 2
 			#--------kp_2_2------------------------
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0, l0))
 
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1, l1))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0)
 
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0_2, l0))
 
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1_2, l1))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0_2)
 
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1_2)
 			#=------------------------------------=#
 			
@@ -183,22 +183,22 @@ function kp_exchangev2(pb, n::Int64, k::Int64,
 		else
 			#---------kp_2_1-----------------------
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0, l0))
 
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1, l1))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0)
 
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0_2, l0))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0_2)
 			#=------------------------------------=#
 
@@ -217,7 +217,7 @@ function kp_exchangev2(pb, n::Int64, k::Int64,
 				z1=z1+c1[stock_l0]
 				z2=z2+c2[stock_l0]
 			end
-			while (z1>dystoZ1)||(z2>dystoZ2)#si notre solution est dominé par le point "dystopique" alors ça sert à rien on le redessent
+			while (z1>nadirGenerateurZ1)||(z2>nadirGenerateurZ2)#si notre solution est dominé par le point "dystopique" alors ça sert à rien on le redessent
 				stock_l1 = rand(l1)
 				deleteat!(l1, findall(x->x==stock_l1, l1))
 				push!(l0, stock_l1)
@@ -229,7 +229,7 @@ function kp_exchangev2(pb, n::Int64, k::Int64,
 		push!(lA, pb)
 		push!(z1list, z1)
 		push!(z2list, z2)
-		println("On projette la solution")
+		#println("On projette la solution")
 		#projectingSolution!(lA, i, A, c1, c2, λ1, λ2,d)
 		#TRES TRES CHIANT: JETTE UN COUP D'OEIL A LA FONCTION PROJECTING SOLUTION
 		#SOLUTION: PUSH TOUTE LES SOLUTIONS DU KP DANS LA ET FAIRE UN BOUCLE DANS LE MAIN QUI TRIE LES SOLUTIONS ADMISSIBLE
@@ -248,7 +248,7 @@ end
 function kp_exchangev1(pb, n::Int64, k::Int64, 
 	A::Array{Int,2}, c1::Array{Int,1}, c2::Array{Int,1}, 
 	λ1::Vector{Float64}, λ2::Vector{Float64},
-	d::tListDisplay, dystoZ1, dystoZ2, borneTrue,  lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
+	d::tListDisplay, nadirGenerateurZ1, nadirGenerateurZ2, borneTrue,  lA, nbIter, l0, l1, z1, z2, z1list, z2list, sommeZ1Z2Generateur)
 
 	println("On entre dans la fonction kp")
 
@@ -295,16 +295,16 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 
 		if rnd == 1
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0, l0))
 
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1, l1))
 
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0)
 
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 			#=-----------------------------------=#
 			pb = kp_1_1(pb, stock_l0,stock_l1)
@@ -312,9 +312,9 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 			z2=z2+c2[stock_l0]-c2[stock_l1]
 		elseif rnd == 2
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l0")
+			#println("Je supprime dans l0")
 			deleteat!(l0, findall(x->x==stock_l0, l0))
-			println("J'ajoute dans l1")
+			#println("J'ajoute dans l1")
 			push!(l1,stock_l0)
 			#=------------------------------------=#
 			
@@ -323,9 +323,9 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 			z2=z2+c2[stock_l0]
 		else
 			#=-------MAJ_LIST--------------------=#
-			println("Je supprime dans l1")
+			#println("Je supprime dans l1")
 			deleteat!(l1, findall(x->x==stock_l1, l1))
-			println("J'ajoute dans l0")
+			#println("J'ajoute dans l0")
 			push!(l0, stock_l1)
 			#=------------------------------------=#
 
@@ -342,7 +342,7 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 				z1=z1+c1[stock_l0]
 				z2=z2+c2[stock_l0]
 			end
-			while (z1>dystoZ1)||(z2>dystoZ2)#si notre solution est dominé par le point "dystopique" alors ça sert à rien on le redessent
+			while (z1>nadirGenerateurZ1)||(z2>nadirGenerateurZ2)#si notre solution est dominé par le point "dystopique" alors ça sert à rien on le redessent
 				stock_l1 = rand(l1)
 				deleteat!(l1, findall(x->x==stock_l1, l1))
 				push!(l0, stock_l1)
@@ -354,7 +354,7 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 		push!(lA, pb)
 		push!(z1list, z1)
 		push!(z2list, z2)
-		println("On projette la solution")
+		#println("On projette la solution")
 		#projectingSolution!(lA, i, A, c1, c2, λ1, λ2,d)
 		#TRES TRES CHIANT: JETTE UN COUP D'OEIL A LA FONCTION PROJECTING SOLUTION
 		#SOLUTION: PUSH TOUTE LES SOLUTIONS DU KP DANS LA ET FAIRE UN BOUCLE DANS LE MAIN QUI TRIE LES SOLUTIONS ADMISSIBLE
