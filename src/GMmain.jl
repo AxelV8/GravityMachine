@@ -11,8 +11,8 @@ using JuMP, GLPK, Printf, Random
 
 PlotsOuPyPlot = true
 borneTrue= true
-KP_11_01_10_OU_22_21_11 = false
-NSGATrue= true
+KP_11_01_10_OU_22_21_11 = true
+NSGATrue= false
 
 if PlotsOuPyPlot
     using Plots
@@ -658,7 +658,9 @@ function GM( fname::String,
     
     #Montre les résultats du Kp
     if PlotsOuPyPlot
-        scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross)
+        if !NSGATrue #a supprimer TODO
+            scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross, label="KP")
+        end
         #scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
     else
         scatter(Lz1, Lz2, color="pink", marker="x")
@@ -720,7 +722,7 @@ function GM( fname::String,
      XN,YN = loadNDPoints2SPA(fname)
      if PlotsOuPyPlot
         plot!(XN, YN, lc=:black, lw=0.75, markershape=:cross, ms=1.0, ls=:dot, label="y in YN")
-        scatter!(XN,YN, mc=:black, markershape=:cross)
+        scatter!(XN,YN, mc=:black, markershape=:cross, label="y in YN")
      else
         plot(XN, YN, color="black", linewidth=0.75, marker="+", markersize=1.0, linestyle=":", label = "y in YN")
         scatter(XN, YN, color="black", marker="+")
@@ -747,7 +749,7 @@ function GM( fname::String,
     if NSGATrue
         res1, res2=NSGAII_GM(c1, c2, A, solutionX)
         if PlotsOuPyPlot
-            scatter!(res1,res2, mc=:brown, markershape=:octagon)
+            scatter!(res1,res2, mc=:pink, markershape=:dtriangle, label="NSGA II")
         else
             scatter(res1, res2, color="brown", marker="O")
         end
@@ -762,8 +764,8 @@ end
 # ==============================================================================
 
 #@time GM("sppaa02.txt", 6, 20, 20)
-@time GM("sppnw20.txt", 6, 20, 20)
-
+#@time GM("sppnw20.txt", 6, 20, 20)
+@time GM("sppnw21.txt", 6, 20, 20)
 
 #@time GM("sppnw04.txt", 6, 20, 20)
 #@time GM("sppnw03.txt", 6, 20, 20) #pb glpk

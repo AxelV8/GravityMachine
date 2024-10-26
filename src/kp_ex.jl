@@ -288,10 +288,20 @@ function kp_exchangev1(pb, n::Int64, k::Int64,
 		println("go kp: ", rnd)
 
 		#KP 2-2 check quand les rnd sont egaux et quand la liste est que de
-		stock_l0 = rand(l0)
-		println(stock_l0)
-		stock_l1 = rand(l1)
-		println(stock_l1)
+		stock_l0=0
+		stock_l1=0
+		if length(l0)==0
+			rnd=3
+		else
+			stock_l0 = rand(l0)
+			println(stock_l0)
+		end
+		if length(l1)==0
+			rnd=2
+		else
+			stock_l1 = rand(l1)
+			println(stock_l1)
+		end
 
 		if rnd == 1
 			#=-------MAJ_LIST--------------------=#
