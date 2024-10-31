@@ -11,7 +11,7 @@ using JuMP, GLPK, Printf, Random
 
 PlotsOuPyPlot = true
 borneTrue= true
-KP_11_01_10_OU_22_21_11 = true
+KP_11_01_10_OU_22_21_11 = false
 NSGATrue= false
 
 if PlotsOuPyPlot
@@ -658,7 +658,7 @@ function GM( fname::String,
     
     #Montre les résultats du Kp
     if PlotsOuPyPlot
-        if !NSGATrue #a supprimer TODO
+        if !NSGATrue
             scatter!(Lz1,Lz2, mc=:pink, markershape=:xcross, label="KP")
         end
         #scatter!(listNSGAZ1,listNSGAZ1, mc=:black, markershape=:xcross)
@@ -763,11 +763,11 @@ end
 
 # ==============================================================================
 
-#@time GM("sppaa02.txt", 6, 20, 20)
+@time GM("sppaa02.txt", 6, 20, 20)
 #@time GM("sppnw20.txt", 6, 20, 20)
-@time GM("sppnw21.txt", 6, 20, 20)
-
+#@time GM("sppnw21.txt", 6, 20, 20)
 #@time GM("sppnw04.txt", 6, 20, 20)
+
 #@time GM("sppnw03.txt", 6, 20, 20) #pb glpk
 #@time GM("didactic5.txt", 5, 5, 10)
 #@time GM("sppnw29.txt", 6, 30, 20)
