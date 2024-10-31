@@ -755,16 +755,17 @@ function GM( fname::String,
         end
     end
 
-    savefig("test")
+    if PlotsOuPyPlot 
+        savefig("Sortie Graphique")
+    end
     println("compteur Admissible Via KP : ", compteurAdmissibleViaKP)
     println("total KP Effectuer : ", totalKPEffectuer)
-
 end
 
 # ==============================================================================
 
-@time GM("sppaa02.txt", 6, 20, 20)
-#@time GM("sppnw20.txt", 6, 20, 20)
+#@time GM("sppaa02.txt", 6, 20, 20)
+@time GM("sppnw20.txt", 6, 20, 20)
 #@time GM("sppnw21.txt", 6, 20, 20)
 #@time GM("sppnw04.txt", 6, 20, 20)
 
